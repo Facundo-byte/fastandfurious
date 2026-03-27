@@ -3,24 +3,17 @@ using UnityEngine;
 public class CameraFollowCar : MonoBehaviour
 {
     [Header("Target")]
-    public Transform target; // el auto
-
-    [Header("Distancia y altura")]
-    public float distance = 6.0f;
-    public float height = 2.5f;
+    public Transform carTarget; // el auto
 
     [Header("Suavizado")]
-    public float positionSmoothSpeed = 5f;
-    public float rotationSmoothSpeed = 5f;
+    public float moveSmoothness = 5f;
+    public float rotSmoothness = 5f;
 
-    [Header("Rotación con mouse")]
-    public float mouseSensitivity = 3f;
-    public float maxLookAngle = 60f;
-    public float minLookAngle = -20f;
+    [Header("Suavizado")]
+    public Vector3 moveOffset;
+    public Vector3 rotOffset;
 
-    private float currentYaw = 0f;
-    private float currentPitch = 10f;
-
+    public float maxDistance = 10f;
 
     void Start()
     {
@@ -30,29 +23,36 @@ public class CameraFollowCar : MonoBehaviour
 
     void LateUpdate()
     {
-        if (target == null) return;
+        FollowTarget();
+    }
 
-        // Input del mouse
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+    void FollowTarget()
+    {
+        HandleMovement();
+        HandleRotation();
+    }
 
-        currentYaw += mouseX;
-        currentPitch = Mathf.Clamp(currentPitch, minLookAngle, maxLookAngle);
+    void HandleMovement()
+    {
+        Vector3 targetPos = carTarget.TransformPoint(moveOffset);
 
-        // Rotación base del auto + input del jugador
-        Quaternion rotation = Quaternion.Euler(currentPitch, target.eulerAngles.y + currentYaw, 0);
+        // Dirección desde el auto
+        Vector3 dir = (targetPos - carTarget.position).normalized;
 
-        // Posición deseada detrás del auto
-        Vector3 desiredPosition = target.position 
-                                - rotation * Vector3.forward * distance 
-                                + Vector3.up * height;
+        // Limitar directamente
+        targetPos = carTarget.position + dir * Mathf.Min(Vector3.Distance(targetPos, carTarget.position), maxDistance);
 
-        // Movimiento suave
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * positionSmoothSpeed);
+        transform.position = Vector3.Lerp(transform.position, targetPos, moveSmoothness * Time.deltaTime);
+         
+    }
 
-        // Mirar al auto
-        Vector3 lookTarget = target.position + Vector3.up * 1.5f;
-        Quaternion lookRotation = Quaternion.LookRotation(lookTarget - transform.position);
+    void HandleRotation()
+    {
+        var direction = carTarget.position - transform.position;
+        var rotation = new Quaternion();
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSmoothSpeed);
+        rotation = Quaternion.LookRotation(direction + rotOffset, Vector3.up);
+
+        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, rotSmoothness * Time.deltaTime);
     }
 }

@@ -14,8 +14,8 @@ public class SimpleCarController : MonoBehaviour {
     public List<AxleInfo> axleInfos; 
     public float maxMotorTorque;
     public float maxSteeringAngle;
-    public float maxBrakeTorque = 3000f;
-    public float idleBrakeTorque = 500f;
+    public float maxBrakeTorque;
+    public float idleBrakeTorque;
 
     public float motor;
 
@@ -75,8 +75,17 @@ public class SimpleCarController : MonoBehaviour {
 
             //motor
             if (axleInfo.motor) {
-                axleInfo.leftWheel.motorTorque = motor;
-                axleInfo.rightWheel.motorTorque = motor;
+                if (!isBraking)
+                {
+                    axleInfo.leftWheel.motorTorque = motor;
+                    axleInfo.rightWheel.motorTorque = motor;
+                }
+                else
+                {
+                    axleInfo.leftWheel.motorTorque = 0;
+                    axleInfo.rightWheel.motorTorque = 0;
+                }
+                
             }
 
                  // FRENO
@@ -84,13 +93,15 @@ public class SimpleCarController : MonoBehaviour {
             {
                 if (!handbrake && Vector3.Dot(rb.linearVelocity, transform.forward) > 0.5f)
                 {
+                    Debug.Log("frenando");
                     axleInfo.leftWheel.brakeTorque = maxBrakeTorque;
                     axleInfo.rightWheel.brakeTorque = maxBrakeTorque;
                 }
                 else if(Vector3.Dot(rb.linearVelocity, transform.forward) > 0.5f)
                 {
-                    axleInfo.leftWheel.brakeTorque = maxBrakeTorque / 3;
-                    axleInfo.rightWheel.brakeTorque = maxBrakeTorque / 3;
+                    Debug.Log("frenando");
+                    axleInfo.leftWheel.brakeTorque = maxBrakeTorque;
+                    axleInfo.rightWheel.brakeTorque = maxBrakeTorque;
                 }
                 
             }
